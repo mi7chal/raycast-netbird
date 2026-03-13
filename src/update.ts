@@ -1,4 +1,4 @@
-import { showToast, Toast, open } from "@raycast/api";
+import { showToast, Toast } from "@raycast/api";
 import { netbirdUpdate } from "./utils";
 
 export default async function main() {

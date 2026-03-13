@@ -8,9 +8,6 @@
   "platforms": [
     "macOS"
   ],
-  "contributors": [
-    "mi7chal"
-  ],
   "license": "MIT",
   "commands": [
     {
