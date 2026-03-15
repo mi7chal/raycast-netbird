@@ -6,6 +6,11 @@ import { IncomingMessage } from "http";
 
 const execAsync = promisify(exec);
 
+/**
+ * Type for NetBird status json output. Interface is used in order to avoid errors with
+ * fields added in the future.
+ * @link https://docs.netbird.io/get-started/cli
+ */
 export interface NetbirdStatus {
   peers: {
     total: number;
@@ -85,7 +90,10 @@ export interface NetbirdStatus {
     sessions: unknown[];
   };
 }
+/** Default paths for the NetBird binary */
 const NETBIRD_BIN_PATHS = ["/usr/local/bin/netbird", "/usr/bin/netbird", "/opt/homebrew/bin/netbird"];
+
+/** Default paths for netbird config (from version 55+) */
 const NETBIRD_CONFIG_PATHS = ["/var/lib/netbird"];
 
 async function getNetbirdBin(): Promise<string> {
@@ -107,6 +115,12 @@ async function getNetbirdBin(): Promise<string> {
   }
 }
 
+/**
+ * Formatting errors to be user friendly
+ *
+ * @param error error recieved
+ * @returns formatted string
+ */
 export function formatNetbirdError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
 
@@ -129,6 +143,11 @@ export function formatNetbirdError(error: unknown): string {
   return message;
 }
 
+/**
+ * Fetches NetBird status from `netbird status --json command`
+ *
+ * @returns netbird status
+ */
 export async function getNetbirdStatus(): Promise<NetbirdStatus> {
   const bin = await getNetbirdBin();
   try {
@@ -139,6 +158,9 @@ export async function getNetbirdStatus(): Promise<NetbirdStatus> {
   }
 }
 
+/**
+ * Estabilishes netbird connection or throws formatted error.
+ */
 export async function netbirdUp(): Promise<void> {
   const bin = await getNetbirdBin();
   try {
@@ -152,6 +174,9 @@ export async function netbirdUp(): Promise<void> {
   }
 }
 
+/**
+ * Disconnects with NetBird or throws formatted error.
+ */
 export async function netbirdDown(): Promise<void> {
   const bin = await getNetbirdBin();
   try {
@@ -161,6 +186,11 @@ export async function netbirdDown(): Promise<void> {
   }
 }
 
+/**
+ * Tries to determine the NetBird admin dashboard URL using config files. Using management URL as last fallback.
+ *
+ * @returns full admin url
+ */
 export async function getAdminUrl(): Promise<string> {
   const config_filenames = ["active_profile.json", "default.json"];
 
@@ -242,6 +272,11 @@ async function getLatestRelease(): Promise<string> {
   });
 }
 
+/**
+ * Tries to update NetBird.
+ *
+ * @returns update info
+ */
 export async function netbirdUpdate(): Promise<{ version: string; updated: boolean; latestVersion?: string }> {
   const status = await getNetbirdStatus();
   const currentVersion = status.daemonVersion;
