@@ -3,6 +3,7 @@ import { promisify } from "util";
 import https from "https";
 import fs from "fs";
 import { IncomingMessage } from "http";
+import { open } from "@raycast/api";
 
 const execAsync = promisify(exec);
 
@@ -163,15 +164,36 @@ export async function getNetbirdStatus(): Promise<NetbirdStatus> {
  */
 export async function netbirdUp(): Promise<void> {
   const bin = await getNetbirdBin();
-  try {
-    const { stdout, stderr } = await execAsync(`${bin} up`);
-    // Some successful executions might have misleading output or print to stderr
-    if ((stderr && stderr.includes("Error:")) || stdout.includes("Error:")) {
-      throw new Error(stderr || stdout);
-    }
-  } catch (error: unknown) {
-    throw new Error(formatNetbirdError(error));
-  }
+
+  // we need to return explicit Promise in order to read live output from child process
+  return new Promise((resolve, reject) => {
+    const child = exec(`${bin} up`, (error, stdout, stderr) => {
+      if (error) {
+        reject(new Error(formatNetbirdError(error)));
+        return;
+      }
+      if ((stderr && stderr.includes("Error:")) || stdout.includes("Error:")) {
+        reject(new Error(stderr || stdout));
+        return;
+      }
+      resolve();
+    });
+
+    let urlOpened = false;
+    child.stdout?.on("data", (data) => {
+      const output = data.toString();
+      if (
+        !urlOpened &&
+        (output.includes("Please do the SSO login in your browser") || output.includes("use this URL to log in"))
+      ) {
+        const match = output.match(/(https:\/\/[^\s]+)/);
+        if (match) {
+          urlOpened = true;
+          open(match[1]);
+        }
+      }
+    });
+  });
 }
 
 /**
@@ -292,28 +314,35 @@ export async function netbirdUpdate(): Promise<{ version: string; updated: boole
     return { version: currentVersion, updated: false, latestVersion };
   }
 
-  // Try Brew first
-  let updateTried = false;
-  try {
-    await execAsync("brew list netbird");
-    updateTried = true;
-    await execAsync("brew upgrade netbird");
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    // If brew upgrade failed but it's installed via brew (checked by brew list)
-    if (updateTried && !message.includes("already installed")) {
-      // Brew update failed
-    }
+  const env = { ...process.env, PATH: `${process.env.PATH}:/opt/homebrew/bin:/usr/local/bin` };
 
-    // If not installed via brew or brew failed, and we have a new version, try manual install script
-    if (latestVersion && latestVersion !== currentVersion) {
-      try {
-        const installCmd = "curl -fsSL https://pkgs.netbird.io/install.sh | sh";
-        const script = `do shell script "${installCmd}" with administrator privileges`;
-        await execAsync(`osascript -e '${script}'`);
-      } catch {
-        // Manual update failed
-      }
+  try {
+    await execAsync("brew list netbird", { env });
+  } catch (e) {
+    console.log(e);
+    throw new Error("NetBird is not installed via Homebrew. We can't update it automatically.");
+  }
+
+  let didUpgrade = false;
+  try {
+    await execAsync("brew upgrade netbird", { env });
+    didUpgrade = true;
+  } catch (error) {
+    console.log(error);
+    const message = error instanceof Error ? error.message : String(error);
+    if (!message.includes("already installed")) {
+      throw error;
+    }
+  }
+
+  if (didUpgrade) {
+    const bin = await getNetbirdBin();
+    try {
+      await execAsync(
+        `osascript -e 'do shell script "${bin} service uninstall && ${bin} service install && ${bin} service start" with administrator privileges'`,
+      );
+    } catch (error) {
+      console.error("Failed to restart NetBird service:", error);
     }
   }
 
