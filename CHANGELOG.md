@@ -1,5 +1,9 @@
 # NetBird Changelog
 
+## [Status on empty dns] - {PR_MERGE_DATE}
+
+- Fixed status command error when user does not have netbird DNS enabled
+
 ## [UX Improvements] - {PR_MERGE_DATE}
 
 - Status screen now shows empty screen during loading instead of empty data
