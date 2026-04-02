@@ -38,12 +38,12 @@ export default async function main() {
         primaryAction: serviceRestarted
           ? undefined
           : {
-            title: "Copy Restart Command",
-            onAction: async (t) => {
-              await Clipboard.copy(manualRestartCommand);
-              t.hide();
+              title: "Copy Restart Command",
+              onAction: async (t) => {
+                await Clipboard.copy(manualRestartCommand);
+                t.hide();
+              },
             },
-          },
       });
     } else {
       await toast.hide();
