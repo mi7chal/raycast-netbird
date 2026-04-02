@@ -372,7 +372,6 @@ export async function getAdminUrl(): Promise<string> {
   }
 }
 
-
 /**
  * Polls getNetbirdStatus until the daemon responds or the timeout elapses.
  * Used after service restart to wait for the daemon to come back online.
