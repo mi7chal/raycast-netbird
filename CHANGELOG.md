@@ -1,7 +1,10 @@
 # NetBird Changelog
 
-<<<<<<< HEAD
-## [Status on empty dns] - {PR_MERGE_DATE}
+## [Networks management] - {PR_MERGE_DATE}
+
+- Added `Show Networks` command to list network routes and select/deselect them from Raycast.
+
+## [Status on empty dns] - 2026-03-30
 
 - Fixed status command error when user does not have netbird DNS enabled
 

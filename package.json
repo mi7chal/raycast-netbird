@@ -38,6 +38,13 @@
       "mode": "view"
     },
     {
+      "name": "networks",
+      "title": "Show Networks",
+      "subtitle": "NetBird",
+      "description": "View and manage network routes selection.",
+      "mode": "view"
+    },
+    {
       "name": "status",
       "title": "Show Status",
       "subtitle": "NetBird",
