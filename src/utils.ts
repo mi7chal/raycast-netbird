@@ -402,23 +402,18 @@ export async function netbirdUpdate(
 
   const env = { ...process.env, PATH: `${process.env.PATH}:/opt/homebrew/bin:/usr/local/bin` };
 
-  // `brew list --versions` returns empty string if not installed, so it acts as both an
-  // existence check and version query in one call.
+  // Check if netbird exist and if new version is available
   const brewBefore = (await execAsync("brew list --versions netbird", { env })).stdout.trim();
   const brewVersionBefore = brewBefore.split(/\s+/)[1] ?? "";
   if (!brewVersionBefore) {
     throw new Error("NetBird is not installed via Homebrew. We can't update it automatically.");
   }
 
-  // Avoid running `brew upgrade` when nothing is outdated.
-  // This also prevents unnecessary prompts for service restarts.
   const outdated = (await execAsync("brew outdated netbird", { env })).stdout.trim();
   if (!outdated) {
     return { version: brewVersionBefore, updated: false, serviceRestarted: false };
   }
 
-  // `brew upgrade` can exit successfully even when nothing was upgraded, so we rely on
-  // the version before/after to decide whether to restart the service.
   await onPhase?.("upgrading");
   await execAsync("brew upgrade netbird", { env });
 
