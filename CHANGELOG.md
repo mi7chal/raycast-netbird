@@ -1,5 +1,9 @@
 # NetBird Changelog
 
+## [To be added] - {PR_MERGE_DATE}
+
+- Fixes invalid `brew outdated netbird` output interpretation and occasional errors with service restart.
+
 ## [Custom Admin URL] - {PR_MERGE_DATE}
 
 - Added option to overwrite Admin Panel URL in preferences.

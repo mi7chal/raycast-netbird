@@ -370,7 +370,14 @@ export async function netbirdUpdate(
     throw new Error("NetBird is not installed via Homebrew. We can't update it automatically.");
   }
 
-  const outdated = (await execAsync("brew outdated netbird", { env })).stdout.trim();
+  let outdated = "";
+  try {
+    outdated = (await execAsync("brew outdated netbird", { env })).stdout.trim();
+  } catch (error) {
+    // `brew outdated` exits with 1 if the package is outdated
+    outdated = ((error as { stdout?: string }).stdout || "").trim();
+  }
+
   if (!outdated) {
     return { version: brewVersionBefore, updated: false, serviceRestarted: false };
   }
@@ -394,14 +401,14 @@ export async function netbirdUpdate(
     await onPhase?.("restarting");
     // Try sudo -n first (no password prompt). If it fails, fall back to an AppleScript
     // administrator prompt. See https://github.com/raycast/extensions/pull/10995
-    await execAsync(`osascript -e 'do shell script "PATH=${restartPath}; sudo -n ${safeBin} service restart"'`);
+    await execAsync(`osascript -e 'do shell script "export PATH=${restartPath}; sudo -n ${safeBin} service restart"'`);
     await waitForDaemon();
     serviceRestarted = true;
   } catch (error) {
     console.error("Failed to restart NetBird service (sudo -n):", error);
     try {
       await execAsync(
-        `osascript -e 'do shell script "PATH=${restartPath}; ${safeBin} service restart" with administrator privileges'`,
+        `osascript -e 'do shell script "export PATH=${restartPath}; ${safeBin} service restart" with administrator privileges'`,
       );
       await waitForDaemon();
       serviceRestarted = true;
